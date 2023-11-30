@@ -4,8 +4,10 @@ const {WebClient, LogLevel} = require("@slack/web-api");
 const slackConfig = require("../controller/config/config");
 const {getClient} = require('../controller/mongodb')
 const shortid = require("shortid");
-const cron = require("node-cron");
 
+router.get('/', function (req, res) {
+    res.status(200).send('OK')
+});
 
 async function publishMessage(topic, id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, actionType) {
     try {

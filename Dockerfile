@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # 컨테이너를 실행할 명령을 정의합니다.
-CMD [ "node", "src/app.js" ]
+CMD [ "node", "main.js" ]

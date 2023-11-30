@@ -6,7 +6,7 @@ const slackRouter = require('./routes/slack')
 app.use(express.json());
 app.use(bodyParser.urlencoded({extended: false}))
 
-app.use('/api/v1/slack', slackRouter);
+app.use('/api/v2/slack', slackRouter);
 
 app.get('/', function (req, res) {
     res.status(200).send('OK')
