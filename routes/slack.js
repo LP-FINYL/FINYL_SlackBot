@@ -9,7 +9,7 @@ router.get('/', function (req, res) {
     res.status(200).send('OK')
 });
 
-async function publishMessage(topic, id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, actionType) {
+async function publishMessage(topic, color, deleteReason, id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, actionType) {
     try {
         const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
             logLevel: LogLevel.ERROR
@@ -29,25 +29,27 @@ async function publishMessage(topic, id, title, tags, address, site, instaUrl, o
             longitude,
             image,
             info,
+            deleteReason,
             actionType
         };
 
-        const result = await client.chat.postMessage({
-            token: slackConfig.SLACK_BOT_TOKEN,
-            channel: '#bottest',
-            attachments: [{
-                color: "#ffffff",
-                blocks: [{
-                    type: "section",
-                    text: {
-                        type: "mrkdwn",
-                        text: `${title}에 대한 정보 ${topic} 요청이 왔습니다.`
-                    }
-                }, {
-                    type: "section",
-                    text: {
-                        type: "mrkdwn",
-                        text: `
+        if(!deleteReason) {
+            const result = await client.chat.postMessage({
+                token: slackConfig.SLACK_BOT_TOKEN,
+                channel: '#bottest',
+                attachments: [{
+                    color: color,
+                    blocks: [{
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: `${title}에 대한 정보 ${topic} 요청이 왔습니다.`
+                        }
+                    }, {
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: `
 *가게 정보:*
 \`\`\`
 가게 이름: ${title}
@@ -59,38 +61,108 @@ async function publishMessage(topic, id, title, tags, address, site, instaUrl, o
 정보: ${info || 'N/A'}
 \`\`\`
 `
-                    },
-                }, {
-                    type: "actions",
-                    elements: [{
-                        type: "button",
-                        text: {
-                            type: "plain_text",
-                            emoji: true,
-                            text: "Approve"
                         },
-                        style: "primary",
-                        value: JSON.stringify({action: "approve", additionalData}), // Include additional data in the value
                     }, {
-                        type: "button",
-                        text: {
-                            type: "plain_text",
-                            emoji: true,
-                            text: "reject"
-                        },
-                        style: "danger",
-                        value: JSON.stringify({action: "reject", additionalData}),
+                        type: "actions",
+                        elements: [{
+                            type: "button",
+                            text: {
+                                type: "plain_text",
+                                emoji: true,
+                                text: "Approve"
+                            },
+                            style: "primary",
+                            value: JSON.stringify({action: "approve", additionalData}), // Include additional data in the value
+                        }, {
+                            type: "button",
+                            text: {
+                                type: "plain_text",
+                                emoji: true,
+                                text: "reject"
+                            },
+                            style: "danger",
+                            value: JSON.stringify({action: "reject", additionalData}),
+                        }]
                     }]
                 }]
-            }]
-        });
+            });
 
-        const remindTime = new Date();
-        remindTime.setDate(remindTime.getDate() + 24);
+            const remindTime = new Date();
+            remindTime.setDate(remindTime.getDate() + 24);
 
-        setTimeout(() => {
-            scheduleReminder(client, result.channel, result.message.ts, title, topic);
-        }, remindTime.getTime() - Date.now());
+            setTimeout(() => {
+                scheduleReminder(client, result.channel, result.message.ts, title, topic);
+            }, remindTime.getTime() - Date.now());
+
+        } else {
+            const result = await client.chat.postMessage({
+                token: slackConfig.SLACK_BOT_TOKEN,
+                channel: '#bottest',
+                attachments: [{
+                    color: color,
+                    blocks: [{
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: `${title}에 대한 정보 ${topic} 요청이 왔습니다.`
+                        }
+                    },
+                        {
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: `삭제 요청 사유 : ${deleteReason}`
+                        }
+                    },
+                        {
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: `
+*가게 정보:*
+\`\`\`
+가게 이름: ${title}
+주소: ${address}
+사이트: ${site}
+인스타: ${instaUrl}
+운영 시간: ${operatorTime || 'N/A'}
+전화번호: ${phone}
+정보: ${info || 'N/A'}
+\`\`\`
+`
+                        },
+                    }, {
+                        type: "actions",
+                        elements: [{
+                            type: "button",
+                            text: {
+                                type: "plain_text",
+                                emoji: true,
+                                text: "Approve"
+                            },
+                            style: "primary",
+                            value: JSON.stringify({action: "approve", additionalData}), // Include additional data in the value
+                        }, {
+                            type: "button",
+                            text: {
+                                type: "plain_text",
+                                emoji: true,
+                                text: "reject"
+                            },
+                            style: "danger",
+                            value: JSON.stringify({action: "reject", additionalData}),
+                        }]
+                    }]
+                }]
+            });
+            const remindTime = new Date();
+            remindTime.setDate(remindTime.getDate() + 24);
+
+            setTimeout(() => {
+                scheduleReminder(client, result.channel, result.message.ts, title, topic);
+            }, remindTime.getTime() - Date.now());
+
+        }
 
     } catch (error) {
         console.error(error);
@@ -118,38 +190,7 @@ async function scheduleReminder(client, channel, messageId, title, topic) {
             },
         ]
     });
-
-
-    // client.chat.update({
-    //     token: slackConfig.SLACK_BOT_TOKEN,
-    //     channel: channel,
-    //     ts: messageId,
-    //     text: `24시간이 지났습니다. ${title}에 대한 ${topic} 요청에 대한 승인/거절을 진행해주세요.`
-    // }).catch((error) => {
-    //     console.error('Error scheduling reminder:', error);
-    // });
 }
-
-// async function scheduleReminder(client, channelId, messageId, title, topic) {
-//     try {
-//         // Calculate the timestamp for 30 seconds later
-//         const reminderTime = new Date();
-//
-//         reminderTime.setMinutes(reminderTime.getMinutes());
-//
-//         // Call the chat.scheduleMessage method using the WebClient
-//         const result = await client.chat.scheduleMessage({
-//             channel: channelId,
-//             text: `${title} 가게에 대한 ${topic} 요청이 있습니다! 승인 또는 거부로 요청을 처리해주세요!`,
-//             // Time to post the reminder message, in Unix Epoch timestamp format
-//             post_at: reminderTime.getTime()
-//         });
-//
-//         console.log(result);
-//     } catch (error) {
-//         console.error('Error scheduling reminder:', error);
-//     }
-// }
 
 router.post('/interactivity', async function (req, res) {
 
@@ -298,7 +339,7 @@ router.post('/create', function (req, res) {
     const image = req.body.image
     const info = req.body.info
 
-    publishMessage("추가", null, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, "create");
+    publishMessage("추가", '#4aec0f', null, null, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, "create");
     res.status(200).send('OK');
 });
 
@@ -354,7 +395,7 @@ router.post('/update', function (req, res) {
     const image = body.image
     const info = body.info
 
-    publishMessage("업데이트", id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, "update");
+    publishMessage("업데이트", '#eaf306', null, id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, "update");
     res.status(200).send('OK');
 });
 
@@ -383,8 +424,9 @@ router.post('/delete', function (req, res) {
     const body = req.body
     const id = body.id
     const title = body.title
+    const deleteReason = body.deleteReason
 
-    publishMessage("삭제", id, title, null, null, null, null, null, null, null, null, null, null, 'delete');
+    publishMessage("삭제", '#f30606', deleteReason, id, title, null, null, null, null, null, null, null, null, null, null, 'delete');
     res.status(200).send('OK');
 });
 
