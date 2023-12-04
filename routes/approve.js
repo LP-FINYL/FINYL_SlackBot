@@ -36,7 +36,7 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
         if(!deleteReason) {
             const result = await client.chat.postMessage({
                 token: slackConfig.SLACK_BOT_TOKEN,
-                channel: '#bottest',
+                channel: '#지도등록알람',
                 attachments: [{
                     color: color,
                     blocks: [{
@@ -97,7 +97,7 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
         } else {
             const result = await client.chat.postMessage({
                 token: slackConfig.SLACK_BOT_TOKEN,
-                channel: '#bottest',
+                channel: '#지도등록알람',
                 attachments: [{
                     color: color,
                     blocks: [{
@@ -122,12 +122,6 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
 *가게 정보:*
 \`\`\`
 가게 이름: ${title}
-주소: ${address}
-사이트: ${site}
-인스타: ${instaUrl}
-운영 시간: ${operatorTime || 'N/A'}
-전화번호: ${phone}
-정보: ${info || 'N/A'}
 \`\`\`
 `
                         },
