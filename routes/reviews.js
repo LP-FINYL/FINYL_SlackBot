@@ -32,10 +32,11 @@ async function publishMessage(title, description, stars) {
                     color: "#36a64f", // You can choose a color for the attachment
                     fields: [
                         {
-                            title: `별점: ${stars}`,
+                            value: `별점: ${stars}`,
                         },
                         {
-                            value: `*리뷰 내용:*\n\`\`\`\n ${description}\n\`\`\``,
+                            title: `제목: ${title}`,
+                            value: `\n\`\`\`\n ${description}\n\`\`\``,
                         }
                     ]
                 }
