@@ -4,6 +4,7 @@ const {WebClient, LogLevel} = require("@slack/web-api");
 const slackConfig = require("../controller/config/config");
 const {getClient} = require('../controller/mongodb')
 const shortid = require("shortid");
+const cron = require("node-cron");
 
 router.get('/', function (req, res) {
     res.status(200).send('OK')
@@ -11,6 +12,14 @@ router.get('/', function (req, res) {
 
 async function publishMessage(topic, color, deleteReason, id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, actionType) {
     try {
+
+        const mongoClient = await getClient()
+        const db = mongoClient.db("finyl"); // database
+        const slackDB = db.collection('approval'); // collection
+
+        const id = shortid.generate()
+        const now = new Date()
+
         const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
             logLevel: LogLevel.ERROR
         });
@@ -87,15 +96,17 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
                 }]
             });
 
-            const remindTime = new Date();
-            remindTime.setDate(remindTime.getDate() + 24);
-
-            setTimeout(() => {
-                scheduleReminder(client, result.channel, result.message.ts, title, topic);
-            }, remindTime.getTime() - Date.now());
+            slackDB.insertMany([{
+                id: id,
+                title: title,
+                status: "progress",
+                insertTime: now,
+                ts: result.message.ts,
+                channel: result.channel,
+            }]);
 
         } else {
-            const result = await client.chat.postMessage({
+            await client.chat.postMessage({
                 token: slackConfig.SLACK_BOT_TOKEN,
                 channel: '#지도등록알람',
                 attachments: [{
@@ -149,12 +160,6 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
                     }]
                 }]
             });
-            const remindTime = new Date();
-            remindTime.setDate(remindTime.getDate() + 24);
-
-            setTimeout(() => {
-                scheduleReminder(client, result.channel, result.message.ts, title, topic);
-            }, remindTime.getTime() - Date.now());
 
         }
 
@@ -163,29 +168,61 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
     }
 }
 
-async function scheduleReminder(client, channel, messageId, title, topic) {
+async function scheduleReminder(client) {
 
-    const permalinkResult = await client.chat.getPermalink({
-        channel,
-        message_ts: messageId,
-    });
+    const mongoClient = await getClient()
+    const db = mongoClient.db("finyl"); // database
+    const slackDB = db.collection('approval'); // collection
 
-    const link = permalinkResult.permalink
+    // const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    //
+    // const query = {
+    //     $and: [
+    //         { insertTime: { $gte: twentyFourHoursAgo } },
+    //         { status: "progress" }
+    //     ]
+    // };
 
-    await client.chat.postMessage({
-        channel,
-        blocks: [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": `:man-raising-hand: *오랫동안 처리되지 않은 요청이 있어요!* \n<${link}|* ${title} 매장 승인 또는 거절하러 가기*>`
-                }
-            },
+
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const query = {
+        $and: [
+            { insertTime: { $lte: twentyFourHoursAgo } }, // $lte를 사용해서 현재 시간에서 30분 이전의 시간보다 작거나 같은 값을 갖는 문서를 선택
+            { status: "progress" }
         ]
-    });
-}
+    };
 
+    const cursor = await slackDB.find(query).toArray();
+
+    for (const doc of cursor) {
+        const channel = doc.channel;
+
+        const permalinkResult = await client.chat.getPermalink({
+            channel,
+            message_ts: doc.ts,
+        });
+
+        const link = permalinkResult.permalink;
+        const title = doc.title;
+
+        await client.chat.postMessage({
+            channel: doc.channel,
+            blocks: [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": `:man-raising-hand: *오랫동안 처리되지 않은 요청이 있어요!* \n<${link}|* ${title} 매장 승인 또는 거절하러 가기*>`,
+                    },
+                },
+            ],
+        });
+    }
+
+
+}
 router.post('/interactivity', async function (req, res) {
 
     const body = req.body;
@@ -206,7 +243,7 @@ router.post('/interactivity', async function (req, res) {
     const mentionText = `<@${userId}>`;
 
     const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
-        logLevel: LogLevel.DEBUG
+        logLevel: LogLevel.ERROR
     });
 
 
@@ -262,22 +299,21 @@ router.post('/interactivity', async function (req, res) {
                     attachments: [], // Remove attachments if any
                 });
 
+                deleteApproval(messageId)
 
             } else {
                 console.log('데이터베이스 연결 안됨.');
             }
 
         } else if (action === 'reject') {
-            const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
-                logLevel: LogLevel.ERROR
-            });
-
             await client.chat.update({
                 channel: channelId,
                 ts: messageId,
                 text: `${mentionText} 님이 ${title} ${topic} 요청 승인 거부 하였습니다.`,
                 attachments: [], // Remove attachments if any
             });
+
+            deleteApproval(messageId)
         }
 
         res.status(200).send('OK');
@@ -286,6 +322,17 @@ router.post('/interactivity', async function (req, res) {
         res.status(500).send('Internal Server Error');
     }
 });
+
+async function deleteApproval(messageId) {
+
+    const mongoClient = await getClient()
+    const db = mongoClient.db("finyl"); // database
+    const approval = db.collection('approval'); // collection
+
+    const deleteDoc = {ts: messageId};
+
+    await approval.deleteMany(deleteDoc);
+}
 
 
 async function addStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, callback) {
@@ -321,23 +368,23 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
 router.post('/create', function (req, res) {
 
     const body = req.body
-    const title = req.body.title
-    const tags = req.body.tags
-    const address = req.body.address
-    const site = req.body.site
-    const instaUrl = req.body.instaUrl
-    const operatorTime = req.body.operatorTime
-    const phone = req.body.phone
-    const latitude = req.body.latitude
-    const longitude = req.body.longitude
-    const image = req.body.image
-    const info = req.body.info
+    const title = body.title
+    const tags = body.tags
+    const address = body.address
+    const site = body.site
+    const instaUrl = body.instaUrl
+    const operatorTime = body.operatorTime
+    const phone = body.phone
+    const latitude = body.latitude
+    const longitude = body.longitude
+    const image = body.image
+    const info = body.info
 
     publishMessage("추가", '#4aec0f', null, null, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, "create");
     res.status(200).send('OK');
 });
 
-async function updateStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, callback) {
+async function updateStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info) {
     try {
         const client = await getClient()
         const db = client.db("finyl"); // database
@@ -422,6 +469,20 @@ router.post('/delete', function (req, res) {
 
     publishMessage("삭제", '#f30606', deleteReason, id, title, null, null, null, null, null, null, null, null, null, null, 'delete');
     res.status(200).send('OK');
+});
+
+cron.schedule('0 0 * * *', async () => {
+    try {
+
+        const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
+            logLevel: LogLevel.ERROR
+        });
+
+        await scheduleReminder(client);
+        console.log('Reminder scheduled successfully!');
+    } catch (error) {
+        console.error('Error scheduling reminder:', error);
+    }
 });
 
 module.exports = router;
