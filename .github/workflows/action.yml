@@ -90,8 +90,7 @@ jobs:
           cd FINYL-INFRA
           ls -l
           curl -O https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
-          ls -l
-          unzip main.zip
+          unzip FINYL-INFRA-main.zip
           
 
       - name: Update Image Tag
