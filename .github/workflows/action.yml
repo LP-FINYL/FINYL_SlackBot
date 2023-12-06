@@ -88,9 +88,7 @@ jobs:
         run: |-
           mkdir -p FINYL-INFRA
           cd FINYL-INFRA
-          curl -O https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
-          ls -l
-          unzip main.zip
+          git clone https://github.com/LP-FINYL/FINYL-Infra.git
           
 
       - name: Update Image Tag
