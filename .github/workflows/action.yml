@@ -98,9 +98,8 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          kustomize build ./ | kubectl apply -f -
-          kubectl rollout status deployment/finyl-slack-bot
-          kubectl get services -o wide
+          cat finyl-slack-bot.yaml
+          kubectl apply -f finyl-slack-bot.yaml
       # Deploy the Docker image to the GKE cluster
 #      - name: Deploy
 #        run: |-
