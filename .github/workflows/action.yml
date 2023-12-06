@@ -89,7 +89,7 @@ jobs:
           mkdir -p FINYL-INFRA
           cd FINYL-INFRA
           ls -l
-          curl -sFLo https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
+          curl -O https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
           ls -l
           unzip main.zip
           
