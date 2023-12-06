@@ -92,9 +92,7 @@ jobs:
 
       - name: Update Image Tag
         run: |
-         sed -i 's|image: asia-northeast3-docker.pkg.dev/root-augury-403911/slack-bot/finyl-slack-bot:latest|image: NEW_IMAGE_TAG|' ./finyl-slack-bot.yaml
-        env:
-          NEW_IMAGE_TAG: asia-northeast3-docker.pkg.dev/root-augury-403911/slack-bot/finyl-slack-bot:$GITHUB_SHA
+         sed -i 's|image:asia-northeast3-docker.pkg.dev/root-augury-403911/slack-bot/finyl-slack-bot:latest|image:$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA|' ./finyl-slack-bot.yaml
 
       - name: Deploy to GKE
         run: |
