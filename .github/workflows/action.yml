@@ -83,11 +83,29 @@ jobs:
         run: |-
           curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
           chmod u+x ./kustomize
-      # Deploy the Docker image to the GKE cluster
-      - name: Deploy
+
+      - name: Download and Extract Repository
         run: |-
-          # replacing the image name in the k8s template
-          ./kustomize edit set image LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
-          ./kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment/$DEPLOYMENT_NAME
+          curl -LJO https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
+          unzip -q main.zip -d extracted_repo
+          
+
+      - name: Update Image Tag
+        run: |
+         sed -i 's|image: asia-northeast3-docker.pkg.dev/root-augury-403911/slack-bot/finyl-slack-bot:latest|image: NEW_IMAGE_TAG|' extracted_repo/FINYL-Infra-main/GKE/deployment/finyl-slack-bot.yaml
+        env:
+          NEW_IMAGE_TAG: asia-northeast3-docker.pkg.dev/root-augury-403911/slack-bot/finyl-slack-bot:$GITHUB_SHA
+
+      - name: Deploy to GKE
+        run: |
+          kustomize build extracted_repo/FINYL-Infra-main/GKE | kubectl apply -f -
+          kubectl rollout status deployment/finyl-slack-bot
           kubectl get services -o wide
+      # Deploy the Docker image to the GKE cluster
+#      - name: Deploy
+#        run: |-
+#          # replacing the image name in the k8s template
+#          ./kustomize edit set image LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
+#          ./kustomize build . | kubectl apply -f -
+#          kubectl rollout status deployment/$DEPLOYMENT_NAME
+#          kubectl get services -o wide
