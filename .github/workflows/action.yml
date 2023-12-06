@@ -95,11 +95,13 @@ jobs:
 #          mkdir -p FINYL-INFRA
 #          cd FINYL-INFRA
 #          git clone https://github.com/LP-FINYL/FINYL-Infra.git
+
       - name: Deploy to GKE
         run: |
-          sed -E "s|image: (.*)/finyl-slack-bot:latest|image: \1/finyl-slack-bot:$GITHUB_SHA|" finyl-slack-bot.yaml
+          sed -E "s|image: (.*)/finyl-slack-bot:latest|image: \1/finyl-slack-bot:$GITHUB_SHA|g" finyl-slack-bot.yaml
           cat finyl-slack-bot.yaml
           kubectl apply -f finyl-slack-bot.yaml
+
       # Deploy the Docker image to the GKE cluster
 #      - name: Deploy
 #        run: |-
