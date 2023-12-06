@@ -56,7 +56,7 @@ jobs:
 
 
       - run: |-
-          gcloud --quiet auth configure-docker
+          gcloud --quiet auth configure-docker asia-northeast3-docker.pkg.dev
 
       # Get the GKE credentials so we can deploy to the cluster
       - name: Set up GKE credentials
