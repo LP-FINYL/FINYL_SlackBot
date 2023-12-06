@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Configure Workload Identity Federation and generate an access token.
 #      - id: 'auth'
@@ -50,7 +50,7 @@ jobs:
 
       # Alternative option - authentication via credentials json
       - id: 'auth'
-        uses: 'google-github-actions/auth@v0'
+        uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
