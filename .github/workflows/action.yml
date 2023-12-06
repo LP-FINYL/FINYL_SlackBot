@@ -89,13 +89,9 @@ jobs:
 #          mkdir -p FINYL-INFRA
 #          cd FINYL-INFRA
 #          git clone https://github.com/LP-FINYL/FINYL-Infra.git
-
-      - name: Update Image Tag
-        run: |
-         sed -i 's|image:asia-northeast3-docker.pkg.dev/root-augury-403911/slack-bot/finyl-slack-bot:latest|image:$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA|' ./finyl-slack-bot.yaml
-
       - name: Deploy to GKE
         run: |
+          sed -E 's|image: (.*)/finyl-slack-bot:latest|image: \1/finyl-slack-bot:$GITHUB_SHA|' finyl-slack-bot.yaml
           cat finyl-slack-bot.yaml
           kubectl apply -f finyl-slack-bot.yaml
       # Deploy the Docker image to the GKE cluster
