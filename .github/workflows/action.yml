@@ -54,9 +54,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: Docker configuration
-        run: |-
-          docker login -u oauth2accesstoken -p "${{ steps.auth.outputs.access_token }}" https://$GAR_LOCATION-docker.pkg.dev
+
+      - run: |-
+          gcloud --quiet auth configure-docker
+
       # Get the GKE credentials so we can deploy to the cluster
       - name: Set up GKE credentials
         uses: google-github-actions/get-gke-credentials@v1
