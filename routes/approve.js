@@ -189,7 +189,7 @@ async function scheduleReminder(client) {
 
     const query = {
         $and: [
-            { insertTime: { $lte: twentyFourHoursAgo } }, // $lte를 사용해서 현재 시간에서 30분 이전의 시간보다 작거나 같은 값을 갖는 문서를 선택
+            { insertTime: { $lte: twentyFourHoursAgo } }, // $lte를 사용해서 현재 시간에서 24시간보다 작거나 같은 값을 갖는 문서를 선택
             { status: "progress" }
         ]
     };
