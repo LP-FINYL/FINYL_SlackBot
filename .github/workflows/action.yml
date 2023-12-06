@@ -86,8 +86,10 @@ jobs:
 
       - name: Download and Extract Repository
         run: |-
-          curl -LJO https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
-          unzip -q main.zip -d extracted_repo
+          mkdir -p FINYL-INFRA
+          cd FINYL-INFRA
+          curl -sFLo https://github.com/LP-FINYL/FINYL-Infra/archive/refs/heads/main.zip
+          unzip -q main.zip 
           
 
       - name: Update Image Tag
