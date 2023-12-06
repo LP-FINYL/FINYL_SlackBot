@@ -98,7 +98,7 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          sed -E "s|image: (.*)/finyl-slack-bot:latest|image: \1/finyl-slack-bot:$GITHUB_SHA|g" finyl-slack-bot.yaml
+          sed "s|latest/$GITHUB_SHA|g" finyl-slack-bot.yaml
           cat finyl-slack-bot.yaml
           kubectl apply -f finyl-slack-bot.yaml
 
