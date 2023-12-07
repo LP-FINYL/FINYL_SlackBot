@@ -1,19 +1,19 @@
 var express = require('express');
 var router = express.Router();
 const {WebClient, LogLevel} = require("@slack/web-api");
-const slackConfig = require("../controller/config/config");
+const slackBotToken = process.env.SLACK_BOT_TOKEN;
 router.get('/', function (req, res) {
     res.status(200).send('OK')
 });
 
 async function publishMessage(title, description, stars) {
     try {
-        const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
+        const client = new WebClient(slackBotToken, {
             logLevel: LogLevel.ERROR
         });
 
         const result = await client.chat.postMessage({
-            token: slackConfig.SLACK_BOT_TOKEN,
+            token: slackBotToken,
             channel: '#feedback',
             blocks: [
                 {
