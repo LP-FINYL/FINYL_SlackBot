@@ -27,22 +27,22 @@ spec:
             - name: MONGODB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: slack-bot-secret
+                  name: account-secret
                   key: mongodb_username
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: slack-bot-secret
+                  name: account-secret
                   key: mongodb_password
             - name: MONGODB_URL
               valueFrom:
                 secretKeyRef:
-                  name: slack-bot-secret
+                  name: account-secret
                   key: mongodb_url
             - name: SLACK_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: slack-bot-secret
+                  name: account-secret
                   key: SLACK_BOT_TOKEN
           resources:
             limits:
