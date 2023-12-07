@@ -98,8 +98,9 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          cat finyl-slack-bot.yaml
-          kubectl apply -f finyl-slack-bot.yaml
+          sed 's/latest/$GITHUB_SHA/g' ./finyl-slack-bot.yaml > deploy.yaml
+          cat deploy.yaml
+          kubectl apply -f deploy.yaml
 
       # Deploy the Docker image to the GKE cluster
 #      - name: Deploy
