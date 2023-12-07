@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const {WebClient, LogLevel} = require("@slack/web-api");
-const slackConfig = require("../controller/config/config");
+const slackBotToken = process.env.SLACK_BOT_TOKEN;
 const {getClient} = require('../controller/mongodb')
 const shortid = require("shortid");
 const cron = require("node-cron");
@@ -20,7 +20,7 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
         const id = shortid.generate()
         const now = new Date()
 
-        const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
+        const client = new WebClient(slackBotToken, {
             logLevel: LogLevel.ERROR
         });
 
@@ -44,7 +44,7 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
 
         if(!deleteReason) {
             const result = await client.chat.postMessage({
-                token: slackConfig.SLACK_BOT_TOKEN,
+                token: slackBotToken,
                 channel: '#지도등록알람',
                 attachments: [{
                     color: color,
@@ -107,7 +107,7 @@ async function publishMessage(topic, color, deleteReason, id, title, tags, addre
 
         } else {
             await client.chat.postMessage({
-                token: slackConfig.SLACK_BOT_TOKEN,
+                token: slackBotToken,
                 channel: '#지도등록알람',
                 attachments: [{
                     color: color,
@@ -242,7 +242,7 @@ router.post('/interactivity', async function (req, res) {
     // Mention the user who approved the request
     const mentionText = `<@${userId}>`;
 
-    const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
+    const client = new WebClient(slackBotToken, {
         logLevel: LogLevel.ERROR
     });
 
@@ -474,7 +474,7 @@ router.post('/delete', function (req, res) {
 cron.schedule('0 0 * * *', async () => {
     try {
 
-        const client = new WebClient(slackConfig.SLACK_BOT_TOKEN, {
+        const client = new WebClient(slackBotToken, {
             logLevel: LogLevel.ERROR
         });
 

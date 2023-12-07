@@ -1,5 +1,7 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const {mongodb_username, mongodb_password, mongodb_url} = require('./config/config')
+const mongodb_username = process.env.MONGODB_USERNAME;
+const mongodb_password = process.env.MONGODB_PASSWORD;
+const mongodb_url = process.env.MONGODB_URL;
 const uri = `mongodb+srv://${mongodb_username}:${mongodb_password}@${mongodb_url}/test`;
 
 const client = new MongoClient(uri, {

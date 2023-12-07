@@ -23,6 +23,27 @@ spec:
           name: finyl-slack-bot
           ports:
             - containerPort: 3000
+          env:
+            - name: MONGODB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: slack-bot-secret
+                  key: mongodb_username
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: slack-bot-secret
+                  key: mongodb_password
+            - name: MONGODB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: slack-bot-secret
+                  key: mongodb_url
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: slack-bot-secret
+                  key: SLACK_BOT_TOKEN
           resources:
             limits:
               cpu: 500m
