@@ -13,8 +13,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 app.use(helmet())
 
-app.use('/api/v1', indexRouter);
-app.use('/api/v1/approval', approvalRouter);
+app.use('/api/v2', indexRouter);
+app.use('/api/v2/approval', approvalRouter);
 
 app.get('/', function (req, res) {
     res.status(200).send('OK')
